@@ -9,7 +9,7 @@
 #
 # 用法：
 #   powershell -ExecutionPolicy Bypass -File install-phone-scripts.ps1 `
-#       -DshHome '<DSH_HOME>' -NpmBin '<npm bin>' -WorkDir '<workspace>'
+#       -DshHome 'E:\dsh' -NpmBin 'E:\npm-global' -WorkDir 'D:\DeepSeek'
 param(
   [string]$TargetDir = (Join-Path $env:LOCALAPPDATA 'dsh-phone'),
   [string]$DshHome = $env:DSH_HOME,
@@ -40,7 +40,8 @@ $map = @(
   @{ Src = 'run-instance.ps1';     Dst = 'run-instance.ps1'; Template = $true  },
   @{ Src = 'repair-workspace.ps1'; Dst = 'repair-workspace.ps1'; Template = $true  },
   @{ Src = 'stop-command.ps1';     Dst = 'stop.ps1';         Template = $false },
-  @{ Src = 'power-command.ps1';    Dst = 'power.ps1';        Template = $false }
+  @{ Src = 'power-command.ps1';    Dst = 'power.ps1';        Template = $false },
+  @{ Src = 'register-phone-key.ps1'; Dst = 'register-phone-key.ps1'; Template = $false }
 )
 
 if (-not (Test-Path $TargetDir)) {
@@ -65,7 +66,7 @@ foreach ($item in $map) {
 
 # 自检：文件都在、没有残留占位符、大小打出来
 $fail = $false
-foreach ($name in @('start.ps1', 'run-instance.ps1', 'repair-workspace.ps1', 'stop.ps1', 'power.ps1')) {
+foreach ($name in @('start.ps1', 'run-instance.ps1', 'repair-workspace.ps1', 'stop.ps1', 'power.ps1', 'register-phone-key.ps1')) {
   $p = Join-Path $TargetDir $name
   if (-not (Test-Path $p)) {
     Write-Output "VERIFY_FAIL $name missing"
@@ -87,3 +88,5 @@ if ($fail) {
 }
 Write-Output "DIR $TargetDir"
 Write-Output "DONE"
+
+

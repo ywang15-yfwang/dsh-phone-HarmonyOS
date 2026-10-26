@@ -1,10 +1,12 @@
-﻿import { hilog } from '@kit.PerformanceAnalysisKit';
-import { router } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
+import { http } from '@kit.NetworkKit';
+import { promptAction, router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { BusinessError, pasteboard } from '@kit.BasicServicesKit';
 import { DeviceProfile, profileProblem } from '../../model/DeviceProfile';
 import { profileStore, setActiveProfile } from '../../services/ProfileStore';
 import { DshApiClient, DshApiResult, pluginTarget } from '../../services/DshApiClient';
+import { pluginRequest } from '../../services/net/DshNet';
 import { KernelStatus, PeerInfo, kernelStatus, peersAsync } from '../f01-tailnet/KernelBridge';
 import { isExtensionLive, readExtensionStatus, sendExtensionCommand } from '../f01-tailnet/VpnStatusStore';
 import { VpnExtensionStatus } from '../../model/VpnTypes';
@@ -962,6 +964,29 @@ export struct ComputerListView {
     });
   }
 
+  /**
+   * 把本机公钥交给电脑插件：电脑上会弹 UAC，用户点“是”即自动写入授权文件。
+   * 插件必须正在运行（dsh 已启动）。
+   */
+  private async registerPubKey(): Promise<void> {
+    const key: string = this.sshPubKey.trim();
+    if (key.length === 0) {
+      return;
+    }
+    try {
+      const base = pluginTarget(pairingVault.hostOr(''));
+      const res = await pluginRequest(base.address, base.port, http.RequestMethod.POST,
+        '/pair/register-key', JSON.stringify({ publicKey: key }));
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        promptAction.showToast({ message: '电脑已授权，再点一次「开启」', duration: 2500 });
+        this.sshPubKey = '';
+      } else {
+        promptAction.showToast({ message: '电脑上没有授权（UAC 被拒绝或失败）', duration: 3000 });
+      }
+    } catch (error) {
+      promptAction.showToast({ message: '发送失败：电脑插件没连上', duration: 3000 });
+    }
+  }
   build() {
     Column() {
       // ── 顶栏：标题 ＋「刷新」（无底色图标，和会话页顶栏同一套视觉）──
@@ -1122,13 +1147,20 @@ export struct ComputerListView {
       // ── 首次用「启动」时：电脑还不认识本机，把公钥摆出来让用户加一次 ──
       if (this.sshPubKey.length > 0) {
         Column({ space: 6 }) {
-          Text('这台电脑还不认识本机。把下面这行加到电脑的 SSH 授权文件里（一次就够）：')
+          Text('这台电脑还不认识本机。点「发送到电脑授权」，在电脑上弹出的 UAC 窗口点「是」即可（dsh 需正在运行）。')
             .fontSize(12).fontColor('#8C6F5A').width('100%')
           Text(this.sshPubKey)
             .fontSize(11).fontColor('#2A1C14').width('100%')
             .copyOption(CopyOptions.LocalDevice)
             .maxLines(3).textOverflow({ overflow: TextOverflow.Ellipsis })
           Row() {
+            Button('发送到电脑授权')
+              .fontSize(13).constraintSize({ minHeight: 32 })
+              .backgroundColor('#E0622A').fontColor('#FFFFFF').borderRadius(16)
+              .onClick(() => {
+                void this.registerPubKey();
+              })
+              .margin({ right: 8 })
             Button('复制公钥')
               .fontSize(13).constraintSize({ minHeight: 32 })
               .backgroundColor('#eef3ff').fontColor('#E0622A').borderRadius(16)
@@ -1166,6 +1198,7 @@ export struct ComputerListView {
     .backgroundColor(Color.Transparent)
   }
 }
+
 
 
 

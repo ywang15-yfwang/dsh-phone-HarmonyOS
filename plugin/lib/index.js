@@ -32,7 +32,7 @@ import { createServer, request as httpRequest } from "node:http";
 import { createHash, randomBytes } from "node:crypto";
 import { networkInterfaces, homedir } from "node:os";
 import { dirname, join, extname } from "node:path";
-import { createReadStream, promises as fsp } from "node:fs";
+import { createReadStream, existsSync, readFileSync, writeFileSync, promises as fsp } from "node:fs";
 import { spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { createApprovalHub } from "./approval-hub.js";
@@ -328,6 +328,42 @@ const internals = { store: null };
 
 // ---- 小工具 ---------------------------------------------------------------
 
+/**
+ * 登记手机 SSH 公钥：把公钥交给提权脚本，由它在电脑上弹 UAC 并写入授权文件。
+ * 只在电脑前有人点“是”时才会成功。
+ */
+function registerSshPublicKey(publicKey) {
+  return new Promise((resolve) => {
+    try {
+      const localAppData = process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local");
+      const helper = join(localAppData, "dsh-phone", "register-phone-key.ps1");
+      if (!existsSync(helper)) {
+        resolve({ status: 503, body: { ok: false, error: "helper-missing" } });
+        return;
+      }
+      const tempDir = process.env.TEMP ?? join(homedir(), "AppData", "Local", "Temp");
+      const stamp = String(Date.now());
+      const keyFile = join(tempDir, `dsh-phone-key-${stamp}.pub`);
+      const resultFile = join(tempDir, `dsh-phone-key-${stamp}.result.json`);
+      writeFileSync(keyFile, publicKey + "\n", "utf8");
+      const command = `Start-Process -FilePath powershell -Verb RunAs -Wait -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','${helper}','-KeyFile','${keyFile}','-ResultFile','${resultFile}'`;
+      const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command], {
+        windowsHide: true
+      });
+      child.on("error", () => resolve({ status: 500, body: { ok: false, error: "spawn-failed" } }));
+      child.on("exit", () => {
+        try {
+          const parsed = JSON.parse(readFileSync(resultFile, "utf8"));
+          resolve({ status: parsed.ok === true ? 200 : 403, body: parsed });
+        } catch {
+          resolve({ status: 403, body: { ok: false, error: "denied-or-failed" } });
+        }
+      });
+    } catch (error) {
+      resolve({ status: 500, body: { ok: false, error: String((error && error.message) || error) } });
+    }
+  });
+}
 function sendJson(res, status, body) {
   res.writeHead(status, JSON_HEADERS);
   res.end(JSON.stringify(body));
@@ -689,6 +725,20 @@ function createStore(options = {}) {
       return;
     }
 
+    // **登记手机 SSH 公钥**（首次/重装后；电脑上会弹 UAC）
+    if (path === `${API_PREFIX}register-key`) {
+      if (method !== "POST") return sendJson(res, 405, { ok: false, error: "method" });
+      readBody(req).then(async (body) => {
+        if (body === null) return sendJson(res, 413, { ok: false, error: "body-too-large" });
+        const key = String(body.publicKey || "").trim();
+        if (!/^ssh-(ed25519|rsa) [A-Za-z0-9+/=]+(?: [^\r\n]*)?$/.test(key) || key.length > 4096) {
+          return sendJson(res, 400, { ok: false, error: "bad-key" });
+        }
+        const outcome = await registerSshPublicKey(key);
+        sendJson(res, outcome.status, outcome.body);
+      });
+      return;
+    }
     // **审批待处理列表**（手机回前台补拉）
     if (path === `approvals/pending`) {
       if (method !== `GET`) return sendJson(res, 405, { ok: false, error: `method` });

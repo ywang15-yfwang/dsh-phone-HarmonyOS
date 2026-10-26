@@ -5,6 +5,9 @@ import { cleanupTemp } from '../../services/TempFiles';
 import { getControlUrl, setControlUrl } from '../../services/GlobalSettings';
 import { DeviceProfile } from '../../model/DeviceProfile';
 import { profileStore } from '../../services/ProfileStore';
+import { sshKeys } from '../../services/ssh/SshKeys';
+import { pluginRequest } from '../../services/net/DshNet';
+import { http } from '@kit.NetworkKit';
 import { BottomNav } from '../../components/BottomNav';
 import {
   UI_BG_TOP, UI_BG_BOTTOM, UI_SURFACE, UI_TEXT, UI_TEXT2, UI_TEXT3,
@@ -120,6 +123,32 @@ export struct ConfigHomeView {
     });
   }
 
+  /** 把本机 SSH 公钥发给这台电脑的插件：电脑上会弹 UAC，点“是”即自动登记 */
+  private async pairComputer(host: string, index: number): Promise<void> {
+    const ctx = this.getUIContext().getHostContext();
+    if (ctx === undefined) {
+      return;
+    }
+    const profile = profileStore.get(ctx, host);
+    if (profile === undefined || profile.pluginPort <= 0) {
+      promptAction.showToast({ message: '这台电脑还没配置插件端口', duration: 2500 });
+      return;
+    }
+    try {
+      await sshKeys.ensure(ctx);
+      const key: string = sshKeys.publicKeyLine();
+      promptAction.showToast({ message: '已发送，请在电脑上点 UAC「是」', duration: 3000 });
+      const res = await pluginRequest(host, profile.pluginPort, http.RequestMethod.POST,
+        '/pair/register-key', JSON.stringify({ publicKey: key }));
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        promptAction.showToast({ message: '电脑已授权，可以点「开启」了', duration: 3000 });
+      } else {
+        promptAction.showToast({ message: '授权失败：电脑上没点允许', duration: 3000 });
+      }
+    } catch (error) {
+      promptAction.showToast({ message: '发送失败：电脑插件没连上', duration: 3000 });
+    }
+  }
   build() {
     Stack({ alignContent: Alignment.Bottom }) {
       Column({ space: 12 }) {
@@ -175,6 +204,13 @@ export struct ConfigHomeView {
                   }
                   .layoutWeight(1)
                   .alignItems(HorizontalAlign.Start)
+                  Text('配对')
+                    .fontSize(12).fontColor(UI_ACCENT)
+                    .padding({ left: 10, right: 10, top: 5, bottom: 5 })
+                    .backgroundColor(UI_ACCENT_SOFT).borderRadius(12)
+                    .onClick(() => {
+                      this.pairComputer(host, index);
+                    })
                   Text('删除')
                     .fontSize(12).fontColor(UI_WARN)
                     .padding({ left: 10, right: 10, top: 5, bottom: 5 })
@@ -245,6 +281,8 @@ export struct ConfigHomeView {
     })
   }
 }
+
+
 
 
 

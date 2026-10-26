@@ -1,0 +1,45 @@
+{
+  "app": {
+    "bundleName": "com.dsh.phone",
+    "vendor": "dsh",
+    "versionCode": 7000000,
+    "versionName": "0.7.0",
+    "icon": "$media:app_icon",
+    "label": "$string:app_name",
+    // AC-11（大字体下不崩不裁）的前提：**应用默认不跟随系统字体**，必须显式配 followSystem。
+    // ⚠️ 两段式（第一次我写成内联对象 ⇒ 构建红：schema 要求 `app.configuration` **是字符串**，报
+    //    `instancePath: 'app.configuration', keyword: 'type', params: { type: 'string' }`）：
+    //    ① 这里只放**资源引用**；② 真正的设置在 `AppScope/resources/base/profile/configuration.json`。
+    // 依据：capabilities/arkui-support-for-aging-adaptation.md:39-52（原文 "通过配置
+    //    `configuration": "$profile:configuration"`，指向 base/profile/configuration.json 文件"）、
+    //    capabilities/subscribe-system-environment-variable-changes.md:47、dev-faq/faqs-ability-140.md:65
+    // 注：**不加 `fontSizeMaxScale`**（项目经理裁定：全局上限会把"大字体下不崩不裁"的验强度改软）
+    "configuration": "$profile:configuration"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

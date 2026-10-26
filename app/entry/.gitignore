@@ -1,0 +1,9 @@
+/node_modules
+/oh_modules
+/.preview
+/build
+/.cxx
+/.test
+# 原生产物不入库（50 MB 级 .so 由 build-kernel-bridge.ps1 重建，脚本带哈希/幂等）
+/libs/
+*.so

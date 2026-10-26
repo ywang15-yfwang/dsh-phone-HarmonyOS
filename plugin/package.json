@@ -1,0 +1,28 @@
+{
+  "name": "dsh-to-phone",
+   "version": "0.7.0",
+  "private": true,
+  "description": "Hand a phone a long-lived dsh browser-session cookie over the tailnet — no desktop-side approval, no manual copy. Also serves/opens non-image attachments (video & documents) so the desktop can play/open them.",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "slots"
+      ]
+    }
+  }
+}
+

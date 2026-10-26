@@ -1,0 +1,20 @@
+﻿{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "DSH 手机端：连接电脑上的 dsh（界面模块）"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "DSH 手机端主界面（连接状态 / 输入 / 会话 / 传输）"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "MyPhone"
+    },
+    {
+      "name": "mic_reason",
+      "value": "用于把你说的中文转成文字（仅在你按下说话时录音）"
+    }
+  ]
+}

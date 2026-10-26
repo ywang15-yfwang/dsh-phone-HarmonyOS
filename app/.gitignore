@@ -1,0 +1,33 @@
+﻿/node_modules
+/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+/.appanalyzer
+# 开发/取证过程的中间产物（截图、日志、报告、构建包）—— 不属于 App 源码，不进版本控制
+/_dev
+# 临时自查脚本
+/tmp
+# 每枚 build 的带戳存档（可重建，不进版本控制）
+/artifacts
+# 验证截图（验证材料，不进版本控制）
+/shots
+# 改动前的文件快照（回退用，留在本地磁盘即可）
+/_versions
+
+# 签名材料：绝不提交
+/signature
+*.p12
+*.p7b
+*.cer
+*.csr
+*.jks
+*.keystore
+
+

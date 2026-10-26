@@ -1,0 +1,12 @@
+{
+  "src": [
+    "pages/Welcome",
+    "pages/Index",
+    "pages/Conversation",
+    "pages/DeviceConfig",
+    "pages/ConfigHome",
+    "pages/Files",
+    "pages/Artifacts",
+    "pages/ArtifactView"
+  ]
+}

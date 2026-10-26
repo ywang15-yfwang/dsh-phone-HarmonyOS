@@ -1,0 +1,6 @@
+{
+  "name": "libtailscale_ohos.so",
+  "types": "./index.d.ts",
+  "version": "0.1.0",
+  "description": "NAPI bridge to the Tailscale OHOS Go kernel (dsh phone client)"
+}

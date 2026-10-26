@@ -22,7 +22,7 @@
 /** F2/AC-03 固定标识（沿用项目经理给的测试标识） */
 export const AC03_MARKER: string = 'DSH-AC03-OK-2026';
 
-/** 本轮 prompt 的投递方式：queue = 排队到下一轮，steer = 立即插队 */
+/** 本轮 prompt 的投递方式：queue = 排队到下一轮，steer = 立即插入当前轮 */
 let promptMode: string = 'queue';
 
 export function setPromptMode(mode: string): void {

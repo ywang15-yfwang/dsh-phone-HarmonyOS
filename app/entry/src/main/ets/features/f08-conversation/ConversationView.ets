@@ -1508,7 +1508,7 @@ export struct ConversationView {
               this.stopGeneration();
             })
         } else if (this.busy) {
-          Button('插队')
+          Button('插入')
             .id('chat-steer')
             .fontSize(15)
             .constraintSize({ minHeight: 44 })

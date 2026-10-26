@@ -9,7 +9,7 @@
 #
 # 用法：
 #   powershell -ExecutionPolicy Bypass -File install-phone-scripts.ps1 `
-#       -DshHome 'E:\dsh' -NpmBin 'E:\npm-global' -WorkDir 'D:\DeepSeek'
+#       -DshHome 'E:\dsh' -NpmBin 'E:\npm-global' -WorkDir '<工作目录>'
 param(
   [string]$TargetDir = (Join-Path $env:LOCALAPPDATA 'dsh-phone'),
   [string]$DshHome = $env:DSH_HOME,
@@ -88,5 +88,6 @@ if ($fail) {
 }
 Write-Output "DIR $TargetDir"
 Write-Output "DONE"
+
 
 

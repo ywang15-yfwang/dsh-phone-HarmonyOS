@@ -9,7 +9,7 @@
  *   - 绝不 bind `0.0.0.0`，绝不绑公网网卡；
  *   - 探测不到 tailnet 地址 ⇒ **不启动监听**（记日志说明原因，**不降级**成"开放给局域网"）；
  *   - 来源闸门只放行「回环」与「tailnet 段（100.64.0.0/10）」，其余一律 403；**完全不看 X-Forwarded-For**。
- * 效果：只有你自己的 tailnet 设备能到达这个口。
+ * 效果：只有你自己的 tailnet 设备能到达这个口（鸿蒙模拟器走 `10.0.2.2` → 宿主回环，同样命中）。
  *
  * ## 凭据怎么来（路径 1：复用 dsh 自己的签发能力，不复制算法、不建反向代理）
  *   - `ctx.connection.browserAuth`（`HostConnectionService` 的公开字段，
@@ -25,7 +25,7 @@
  * 活密钥（:349），磁盘记录被改动要到下次激活才生效 —— 复制品一旦漂移就会造出 401 的 cookie。
  * 走 `authorizeIndex` 用的是同一把钥匙，零漂移。
  *
- * 自有监听口（每个实例在插件 config 里自行配置）**刻意不是 dsh 的 `/api` 路由**：`/api` 一律先过围栏，
+ * 自有监听口（端口由部署配置指定）**刻意不是 dsh 的 `/api` 路由**：`/api` 一律先过围栏，
  * 手机在拿到 cookie 之前必然 401，所以配对话必须发生在围栏之外。
  */
 import { createServer, request as httpRequest } from "node:http";
@@ -47,17 +47,7 @@ const LOOPBACK_HOST = "127.0.0.1";
 
 const API_PREFIX = "/pair/";
 
-/**
- * 配对端口：**没有默认值**，每个 dsh 实例都必须在插件 config 里显式配置 `port`。
- * 缺配置直接报错，避免两个实例悄悄抢同一个端口。
- */
-function requirePort(options) {
-  const port = options?.port;
-  if (!Number.isInteger(port) || port < 0 || port > 65535) {
-    throw new Error('dsh-to-phone: 未配置配对端口，请在插件 config 里设置 port（1-65535）');
-  }
-  return port;
-}
+const DEFAULT_PORT = 18099;
 /** 同一来源 IP 的两次取凭据最小间隔。 */
 const CLAIM_COOLDOWN_MS = 10 * 1000;
 /** 请求体上限，防止有人在监听口上灌大包。 */
@@ -481,7 +471,7 @@ function randomToken() {
  * 用一次性 token 换 `set-cookie`。凭据**只发一次**，取走后 token 立即作废。
  */
 function createStore(options = {}) {
-  const port = requirePort(options);
+  const port = Number.isInteger(options.port) && options.port >= 0 ? options.port : DEFAULT_PORT;
   const credentialDays = Number.isInteger(options.credentialDays) ? options.credentialDays : DEFAULT_CREDENTIAL_DAYS;
   const dshPort = Number.isInteger(options.dshPort) && options.dshPort > 0 ? options.dshPort : 0;
   const logger = options.logger ?? null;
@@ -533,7 +523,7 @@ function createStore(options = {}) {
   /**
    * 只有回环和 **tailnet 段内**（100.64.0.0/10）的来源算"自己人"。
    * 2026-10-19 修正：以前只放行"本机那一个 tailnet 地址"，手机（另一台 tailnet 设备）打进来会被 403 ——
-   * 实测：手机是另一台 tailnet 设备时，`源 <peer> => false`，App 因此显示"dsh 未启动"。
+   * 云真机实测手机是 100.119.240.30，`源 100.119.240.30 => false`，App 因此显示"dsh 未启动"。
    * 安全边界本来就是"只有 tailnet 设备能到达这个口"，按整段放行与设计一致。
    */
   function isAllowedSource(remoteAddress) {
@@ -1154,10 +1144,15 @@ function resolveBrowserAuth(ctx, options) {
 }
 
 /**
- * **只在指定的那台 dsh 上绑配对口**。
- * 同一台电脑可能同时跑多个 dsh 实例，它们共用 profile ⇒ 都会加载本插件；配对口端口每个实例各自配置，
- * 被别的实例抢走时 `/pair/info` 的 `phoneAuthority` 会对不上，手机拿到的 cookie 就打不上。
- * 配置：插件 config 里写 `phonePort: <该实例的 dsh 端口>`；不写则不设闸。
+ * **只在指定的那台 dsh 上绑配对口**（2026-10-18 加的闸）。
+ *
+ * 为什么需要：同一台电脑上可能同时跑着多个 dsh web 实例（例如手机要连的 `:3080` 与
+ * 另开的 `:3090`），它们**用同一份 profile** ⇒ 都会加载本插件；而配对口端口是固定 18099，
+ * **谁先绑上，谁就是手机的配对口**。
+ * 一旦被别的实例抢走，`/pair/info` 报的 `phoneAuthority` 就是那台实例的 authority
+ * （实测踩过：拿到 `127.0.0.1:3090` 的 cookie，打 3080 的 `/api` 全 401）。
+ *
+ * 配置：profile 的插件 config 里写 `phonePort: 3080`；不写则不设闸（默认行为不变，测试也不受影响）。
  */
 function rejectIfNotPhoneInstance(ctx, options) {
   const want = Number.isInteger(options.phonePort) ? options.phonePort : 0;
@@ -1204,12 +1199,7 @@ function createPromptInjector(ctx) {
   };
 }
 
-function apply(ctx, options = {}) {
-  if (!Number.isInteger(options.port) || options.port < 0 || options.port > 65535) {
-    ctx.logger?.warn?.("dsh-to-phone: 未配置 port，插件不启用（请在插件 config 里设置 1-65535 的端口）");
-    return;
-  }
-  const dshPort = Number.isInteger(ctx?.webServer?.port) ? ctx.webServer.port : 0;
+function apply(ctx, options = {}) {  const dshPort = Number.isInteger(ctx?.webServer?.port) ? ctx.webServer.port : 0;
   if (rejectIfNotPhoneInstance(ctx, options)) {
     return;
   }
@@ -1225,7 +1215,7 @@ function apply(ctx, options = {}) {
     return state.ok === true && state.current === "auto";
   });
   const store = createStore({
-    port: requirePort(options),
+    port: Number.isInteger(options.port) ? options.port : DEFAULT_PORT,
     credentialDays: Number.isInteger(options.credentialDays) ? options.credentialDays : DEFAULT_CREDENTIAL_DAYS,
     dshPort,
     browserAuth,
@@ -1241,8 +1231,8 @@ function apply(ctx, options = {}) {
     now: typeof options.now === "function" ? options.now : null
   });
   internals.store = store;
-  // 网页端按"自己这个实例"的配对端口访问 host 半边（每个实例端口不同）
-  const clientConfigPort = requirePort(options);
+  // 网页端要按"自己这个实例"的配对端口访问 host 半边（以前写死 18099，3090 的网页会问错实例）
+  const clientConfigPort = Number.isInteger(options.port) ? options.port : DEFAULT_PORT;
   ctx.effect(() => {
     const disposeRoute = ctx.webServer.register({
       kind: "exact",
@@ -1263,6 +1253,7 @@ function apply(ctx, options = {}) {
 }
 
 export {
+  DEFAULT_PORT,
   LOOPBACK_HOST,
   apply,
   cookieNameForAuthority,

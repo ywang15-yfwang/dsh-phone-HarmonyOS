@@ -1457,9 +1457,9 @@ export struct ConversationView {
           SymbolGlyph($r('sys.symbol.plus')).fontSize(20).fontColor(['#5b6470'])
         }
         .id('chat-attach')
-        .width(44)
-        .height(44)
-        .borderRadius(22)
+        .width(34)
+        .height(34)
+        .borderRadius(17)
         .backgroundColor('#FFFFFF')
         .enabled(!this.uploading && !this.sending && this.currentId.length > 0)
         .onClick(() => {
@@ -1472,12 +1472,11 @@ export struct ConversationView {
           TextArea({ text: this.draft })
             .id('chat-input')
             .layoutWeight(1)
-            .constraintSize({ minHeight: 44, maxHeight: 120 })
-            .height(44)
+            .constraintSize({ minHeight: 32, maxHeight: 120 })
             .fontSize(15)
             .backgroundColor(Color.Transparent)
-            .borderRadius(21)
-            .padding({ left: 12, right: 12, top: 11, bottom: 11 })
+            .borderRadius(19)
+            .padding({ left: 12, right: 12, top: 6, bottom: 6 })
             // 客户 2026-10-21：大视频上传要时间，这段时间**输入框要变灰、不能输入**（光标别闪），
             // 发完再恢复 —— 否则用户以为发完了，其实还在传。
             .enabled(!this.uploading && !this.sending)
@@ -1487,10 +1486,10 @@ export struct ConversationView {
             })
         }
         .layoutWeight(1)
-        .constraintSize({ minHeight: 44 })
+        .constraintSize({ minHeight: 34 })
         .backgroundColor('#FFFFFF')
         .border({ width: 1, color: '#EAD9C8' })
-        .borderRadius(22)
+        .borderRadius(17)
         // 语音输入：**交给系统输入法**（客户 2026-10-17 定）——
         // 不再自绘麦克风、不再自己采音写流。手机上点键盘上的语音键说话，文字落进下面的输入框，改了再发。
           .onClick(() => {
@@ -1501,8 +1500,8 @@ export struct ConversationView {
           Button('停止')
             .id('chat-stop')
             .width(64)
+            .height(34)
             .fontSize(15)
-            .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
             .backgroundColor('#FBE6DA')
             .fontColor('#8C6F5A')
@@ -1513,8 +1512,8 @@ export struct ConversationView {
           Button('插入')
             .id('chat-steer')
             .width(64)
+            .height(34)
             .fontSize(15)
-            .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
             .backgroundColor('#E0622A')
             .enabled((this.draft.trim().length > 0 || this.attachedItems.length > 0) && !this.uploading)
@@ -1525,8 +1524,8 @@ export struct ConversationView {
           Button('发送')
             .id('chat-send')
             .width(64)
+            .height(34)
             .fontSize(15)
-            .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
             .backgroundColor('#E0622A')
             .enabled((this.draft.trim().length > 0 || this.attachedItems.length > 0) && !this.sending && !this.uploading)

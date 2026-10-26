@@ -1,4 +1,4 @@
-﻿{
+{
   "string": [
     {
       "name": "module_desc",
@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "MyPhone"
+      "value": "dsh 手机端"
     },
     {
       "name": "mic_reason",
@@ -18,3 +18,4 @@
     }
   ]
 }
+

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dsh 手机端 · 隐私政策</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; background: #FFFBF5; color: #2A1C14; font: 16px/1.75 -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 20px 64px; }
+  h1 { font-size: 30px; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 32px 0 8px; }
+  p, li { color: #3A2A20; }
+  .sub { color: #8C6F5A; margin: 0 0 28px; }
+  .card { background: #fff; border: 1px solid #EAD9C8; border-radius: 18px; padding: 20px 22px; }
+  a { color: #E0622A; }
+  code { background: #F7EFE6; padding: 1px 5px; border-radius: 5px; }
+  footer { margin-top: 36px; color: #8C6F5A; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>dsh 手机端 · 隐私政策</h1>
+  <p class="sub">更新日期：2026-10-26</p>
+
+  <div class="card">
+    <p><strong>一句话：不收集任何个人信息，没有账号，也没有我们自己的服务器。</strong></p>
+  </div>
+
+  <h2>1. 我们收集什么</h2>
+  <p>不收集任何个人信息。</p>
+  <ul>
+    <li>不需要注册账号，没有账号体系；</li>
+    <li>App 没有自己的服务器，不会把使用数据、设备信息、位置、通讯录等上传到任何第三方；</li>
+    <li>不接入广告、统计或推送 SDK。</li>
+  </ul>
+
+  <h2>2. 你的数据存在哪里</h2>
+  <ul>
+    <li>电脑配置（设备名、端口、用户名）：只保存在手机本地；</li>
+    <li>会话缓存与临时文件：只保存在 App 沙箱，可在「配置 → 清除临时文件」删除；</li>
+    <li>配对凭据：只放在内存，不落盘；</li>
+    <li>SSH 密钥：由系统 HUKS 保护，只保存在本机。</li>
+  </ul>
+
+  <h2>3. 网络通信</h2>
+  <p>手机与电脑之间的连接走 <strong>Tailscale</strong> 点对点加密网络，不经过本 App 的服务器。连接目标只能是你自己配置的电脑地址和端口，App 不会向其他地址发送数据。</p>
+
+  <h2>4. 权限</h2>
+  <table>
+    <thead><tr><th align="left">权限</th><th align="left">用途</th></tr></thead>
+    <tbody>
+      <tr><td>网络（INTERNET）</td><td>连接你配置的电脑</td></tr>
+      <tr><td>VPN 扩展（系统授权）</td><td>建立 Tailscale 隧道；首次使用由系统弹窗征求你的同意</td></tr>
+    </tbody>
+  </table>
+  <p>文件选择、保存都通过系统文件选择器完成，不申请存储权限；不使用麦克风（语音输入由系统输入法提供）；不使用通知。</p>
+
+  <h2>5. 数据删除</h2>
+  <ul>
+    <li>删除某台电脑配置：App「配置」页 → 删除；</li>
+    <li>清除临时文件：App「配置」页 → 清除临时文件；</li>
+    <li>卸载 App 会删除本机全部数据；</li>
+    <li>电脑侧数据由你自己在电脑上管理。</li>
+  </ul>
+
+  <h2>6. 第三方</h2>
+  <p>App 内置 Tailscale 开源内核（BSD-3-Clause）用于建立网络连接；该内核只在你的设备与你的电脑之间工作，不向第三方传输数据。第三方软件声明见仓库的 <code>THIRD_PARTY_NOTICES.md</code>。</p>
+
+  <h2>7. 联系方式</h2>
+  <p>问题或建议请通过 GitHub Issues 联系：<a href="https://github.com/ywang15-yfwang/dsh-phone-HarmonyOS/issues">github.com/ywang15-yfwang/dsh-phone-HarmonyOS/issues</a></p>
+
+  <footer>
+    <p>本政策可能随版本更新；更新后会在本页替换并修改「更新日期」。</p>
+  </footer>
+</main>
+</body>
+</html>

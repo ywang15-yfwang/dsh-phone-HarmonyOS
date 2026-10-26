@@ -10,7 +10,7 @@
     },
     {
       "name": "EntryAbility_label",
-      "value": "dsh 手机端"
+      "value": "DshPhone"
     },
     {
       "name": "mic_reason",
@@ -18,4 +18,5 @@
     }
   ]
 }
+
 

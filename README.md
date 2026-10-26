@@ -1,4 +1,4 @@
-# dsh 手机端
+# DshPhone
 
 在手机上接着用电脑上的 dsh。
 
@@ -58,3 +58,4 @@
 本项目使用 **MIT** 许可证，全文见 [LICENSE](LICENSE)。
 
 第三方软件声明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+

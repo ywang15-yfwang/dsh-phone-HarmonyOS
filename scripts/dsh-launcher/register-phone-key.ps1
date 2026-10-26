@@ -29,4 +29,5 @@ try {
     $result = @{ ok = $false; error = $_.Exception.Message }
 }
 
-$result | ConvertTo-Json -Compress | Set-Content -LiteralPath $ResultFile -Encoding UTF8
+$json = $result | ConvertTo-Json -Compress
+[System.IO.File]::WriteAllText($ResultFile, $json, (New-Object System.Text.UTF8Encoding($false)))

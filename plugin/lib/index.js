@@ -356,7 +356,7 @@ function registerSshPublicKey(publicKey) {
         const startedAt = Date.now();
         const poll = () => {
           try {
-            const parsed = JSON.parse(readFileSync(resultFile, "utf8"));
+            const parsed = JSON.parse(readFileSync(resultFile, "utf8").replace(/^\uFEFF/, ""));
             resolve({ status: parsed.ok === true ? 200 : 403, body: parsed });
             return;
           } catch {
@@ -1378,6 +1378,7 @@ function proxyUpgradeToDsh(req, socket, head, dshPort) {
 
   upstream.end();
 }
+
 
 
 

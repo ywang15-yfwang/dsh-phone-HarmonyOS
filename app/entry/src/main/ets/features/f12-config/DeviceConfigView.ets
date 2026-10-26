@@ -1,4 +1,4 @@
-﻿import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { router, promptAction } from '@kit.ArkUI';
@@ -176,6 +176,11 @@ export struct DeviceConfigView {
       return;
     }
     try {
+      const probe = await pluginRequest(this.host, port, http.RequestMethod.GET, '/pair/info');
+      if (probe.statusCode < 200 || probe.statusCode >= 300) {
+        this.errorText = '电脑上的 dsh 没在运行：先在电脑上打开 dsh，再点配对';
+        return;
+      }
       await sshKeys.ensure(c);
       promptAction.showToast({ message: '请在电脑上点 UAC「是」', duration: 3000 });
       const res = await pluginRequest(this.host, port, http.RequestMethod.POST,

@@ -1147,20 +1147,13 @@ export struct ComputerListView {
       // ── 首次用「启动」时：电脑还不认识本机，把公钥摆出来让用户加一次 ──
       if (this.sshPubKey.length > 0) {
         Column({ space: 6 }) {
-          Text('这台电脑还不认识本机。点「发送到电脑授权」，在电脑上弹出的 UAC 窗口点「是」即可（dsh 需正在运行）。')
+          Text('把下面这行加到电脑的 SSH 授权文件里（一次就够）：')
             .fontSize(12).fontColor('#8C6F5A').width('100%')
           Text(this.sshPubKey)
             .fontSize(11).fontColor('#2A1C14').width('100%')
             .copyOption(CopyOptions.LocalDevice)
             .maxLines(3).textOverflow({ overflow: TextOverflow.Ellipsis })
           Row() {
-            Button('发送到电脑授权')
-              .fontSize(13).constraintSize({ minHeight: 32 })
-              .backgroundColor('#E0622A').fontColor('#FFFFFF').borderRadius(16)
-              .onClick(() => {
-                void this.registerPubKey();
-              })
-              .margin({ right: 8 })
             Button('复制公钥')
               .fontSize(13).constraintSize({ minHeight: 32 })
               .backgroundColor('#eef3ff').fontColor('#E0622A').borderRadius(16)

@@ -352,12 +352,22 @@ function registerSshPublicKey(publicKey) {
       });
       child.on("error", () => resolve({ status: 500, body: { ok: false, error: "spawn-failed" } }));
       child.on("exit", () => {
-        try {
-          const parsed = JSON.parse(readFileSync(resultFile, "utf8"));
-          resolve({ status: parsed.ok === true ? 200 : 403, body: parsed });
-        } catch {
-          resolve({ status: 403, body: { ok: false, error: "denied-or-failed" } });
-        }
+        // UAC 提权进程可能在父进程退出后才写结果：轮询等一会儿，别立刻判失败
+        const startedAt = Date.now();
+        const poll = () => {
+          try {
+            const parsed = JSON.parse(readFileSync(resultFile, "utf8"));
+            resolve({ status: parsed.ok === true ? 200 : 403, body: parsed });
+            return;
+          } catch {
+            if (Date.now() - startedAt > 12000) {
+              resolve({ status: 403, body: { ok: false, error: "denied-or-failed" } });
+              return;
+            }
+            setTimeout(poll, 250);
+          }
+        };
+        poll();
       });
     } catch (error) {
       resolve({ status: 500, body: { ok: false, error: String((error && error.message) || error) } });
@@ -1368,6 +1378,7 @@ function proxyUpgradeToDsh(req, socket, head, dshPort) {
 
   upstream.end();
 }
+
 
 
 

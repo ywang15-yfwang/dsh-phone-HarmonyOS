@@ -1,10 +1,13 @@
-import { common } from '@kit.AbilityKit';
+﻿import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { router, promptAction } from '@kit.ArkUI';
 import { DEFAULT_DSH_PORT, DeviceProfile, profileProblem } from '../../model/DeviceProfile';
 import { profileStore } from '../../services/ProfileStore';
 import { clearHostKey } from '../../services/ssh/HostKeyStore';
+import { sshKeys } from '../../services/ssh/SshKeys';
+import { pluginRequest } from '../../services/net/DshNet';
+import { http } from '@kit.NetworkKit';
 import { UI_TEXT, UI_TEXT2, UI_TEXT3, UI_SURFACE, UI_ACCENT, UI_ACCENT_SOFT, UI_WARN, UI_LINE, UI_CARD_RADIUS } from '../../model/UiTheme';
 
 const DOMAIN: number = 0xD001;
@@ -161,6 +164,37 @@ export struct DeviceConfigView {
     .margin({ bottom: 12 })
   }
 
+  /** 配对：把本机 SSH 公钥发给这台电脑的插件，电脑上会弹 UAC；成功即写入授权文件 */
+  private async pairComputer(): Promise<void> {
+    const c: common.Context | undefined = this.ctx();
+    if (c === undefined) {
+      return;
+    }
+    const port: number = this.num(this.pluginPortText);
+    if (port <= 0) {
+      this.errorText = '先填插件端口，再点配对';
+      return;
+    }
+    try {
+      await sshKeys.ensure(c);
+      promptAction.showToast({ message: '请在电脑上点 UAC「是」', duration: 3000 });
+      const res = await pluginRequest(this.host, port, http.RequestMethod.POST,
+        '/pair/register-key', JSON.stringify({ publicKey: sshKeys.publicKeyLine() }));
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        this.paired = true;
+        const stored: DeviceProfile | undefined = profileStore.get(c, this.host);
+        const profile: DeviceProfile = stored !== undefined ? stored : this.draft();
+        profile.paired = true;
+        profile.pluginPort = port;
+        profileStore.save(c, this.host, profile);
+        promptAction.showToast({ message: '完成配对', duration: 3000 });
+      } else {
+        this.errorText = '电脑上未允许（UAC 被拒）';
+      }
+    } catch (error) {
+      this.errorText = '电脑插件没连上：先在电脑上打开 dsh';
+    }
+  }
   build() {
     Column() {
       Row({ space: 8 }) {
@@ -208,6 +242,31 @@ export struct DeviceConfigView {
             this.sshUser = v;
           }, false)
 
+          Row({ space: 10 }) {
+            Column({ space: 2 }) {
+              Text(this.paired ? '此电脑已配对' : '未配对')
+                .fontSize(13).fontColor(this.paired ? '#2E7D32' : UI_TEXT2).width('100%')
+              Text('配对会把这台手机的 SSH 公钥写入电脑，电脑上需点一次 UAC')
+                .fontSize(11).fontColor(UI_TEXT3).width('100%')
+            }
+            .layoutWeight(1)
+            .alignItems(HorizontalAlign.Start)
+            Button(this.paired ? '重新配对' : '配对电脑')
+              .fontSize(13)
+              .constraintSize({ minHeight: 34 })
+              .padding({ left: 14, right: 14 })
+              .backgroundColor(UI_ACCENT_SOFT)
+              .fontColor(UI_ACCENT)
+              .borderRadius(17)
+              .onClick(() => {
+                void this.pairComputer();
+              })
+          }
+          .width('100%')
+          .padding(12)
+          .backgroundColor(UI_SURFACE)
+          .borderRadius(UI_CARD_RADIUS)
+          .margin({ bottom: 12 })
           if (this.errorText.length > 0) {
             Text(this.errorText)
               .fontSize(12)
@@ -269,6 +328,7 @@ export struct DeviceConfigView {
     .backgroundColor('#FFFBF5')
   }
 }
+
 
 
 

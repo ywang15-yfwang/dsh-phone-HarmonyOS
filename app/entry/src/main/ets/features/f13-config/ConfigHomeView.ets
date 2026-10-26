@@ -208,16 +208,6 @@ export struct ConfigHomeView {
                   }
                   .layoutWeight(1)
                   .alignItems(HorizontalAlign.Start)
-                  if (this.pairedFlags[index] === true) {
-                    Text('此电脑已配对').fontSize(12).fontColor('#2E7D32').padding({ left: 6, right: 6 })
-                  }
-                  Text(this.pairedFlags[index] === true ? '重新配对' : '配对电脑')
-                    .fontSize(12).fontColor(UI_ACCENT)
-                    .padding({ left: 10, right: 10, top: 5, bottom: 5 })
-                    .backgroundColor(UI_ACCENT_SOFT).borderRadius(12)
-                    .onClick(() => {
-                      this.pairComputer(host, index);
-                    })
                   Text('删除')
                     .fontSize(12).fontColor(UI_WARN)
                     .padding({ left: 10, right: 10, top: 5, bottom: 5 })

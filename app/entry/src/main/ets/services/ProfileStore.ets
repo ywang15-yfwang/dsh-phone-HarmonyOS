@@ -137,13 +137,15 @@ function toProfile(value: Object): DeviceProfile | undefined {
   const pluginPort: Object | undefined = rec['pluginPort'];
   const sshPort: Object | undefined = rec['sshPort'];
   const sshUser: Object | undefined = rec['sshUser'];
+  const paired: Object | undefined = rec['paired'];
   return {
     name: typeof name === 'string' ? name : base.name,
     // 端口必须在 1–65535：旧版/损坏的配置里可能出现 0 或越界值，不能拿去建连或拼命令
     dshPort: typeof dshPort === 'number' && dshPort > 0 && dshPort <= 65535 ? dshPort : DEFAULT_DSH_PORT,
     pluginPort: typeof pluginPort === 'number' && pluginPort > 0 && pluginPort <= 65535 ? pluginPort : 0,
     sshPort: typeof sshPort === 'number' && sshPort > 0 && sshPort <= 65535 ? sshPort : 0,
-    sshUser: typeof sshUser === 'string' ? sshUser : ''
+    sshUser: typeof sshUser === 'string' ? sshUser : '',
+    paired: paired === true
   };
 }
 
@@ -166,10 +168,13 @@ export function activeProfile(): DeviceProfile {
     dshPort: DEFAULT_DSH_PORT,
     pluginPort: 0,
     sshPort: 0,
-    sshUser: ''
+    sshUser: '',
+    paired: false
   };
 }
 
 export function activeDeviceName(): string {
   return active !== undefined ? active.name : systemDeviceName();
 }
+
+

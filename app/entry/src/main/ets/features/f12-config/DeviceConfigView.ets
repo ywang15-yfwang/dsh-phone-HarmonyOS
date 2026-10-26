@@ -1,4 +1,4 @@
-﻿import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { router, promptAction } from '@kit.ArkUI';
@@ -40,6 +40,7 @@ export struct DeviceConfigView {
   @State sshUser: string = '';
   @State errorText: string = '';
   @State saving: boolean = false;
+  @State paired: boolean = false;
 
   aboutToAppear(): void {
     const ctx: common.Context | undefined = this.ctx();
@@ -53,6 +54,7 @@ export struct DeviceConfigView {
     this.pluginPortText = stored !== undefined && stored.pluginPort > 0 ? `${stored.pluginPort}` : '';
     this.sshPortText = stored !== undefined && stored.sshPort > 0 ? `${stored.sshPort}` : '';
     this.sshUser = stored !== undefined ? stored.sshUser : '';
+    this.paired = stored !== undefined && stored.paired === true;
   }
 
   private ctx(): common.Context | undefined {
@@ -74,7 +76,8 @@ export struct DeviceConfigView {
       dshPort: this.num(this.dshPortText),
       pluginPort: this.num(this.pluginPortText),
       sshPort: this.num(this.sshPortText),
-      sshUser: this.sshUser.trim()
+      sshUser: this.sshUser.trim(),
+      paired: this.paired
     };
   }
 

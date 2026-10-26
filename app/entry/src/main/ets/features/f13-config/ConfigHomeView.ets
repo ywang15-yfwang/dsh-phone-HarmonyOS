@@ -1,4 +1,4 @@
-﻿import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { router } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
 import { cleanupTemp } from '../../services/TempFiles';
@@ -28,6 +28,7 @@ export struct ConfigHomeView {
   @State controlUrl: string = '';
   @State hosts: string[] = [];
   @State names: string[] = [];
+  @State pairedFlags: boolean[] = [];
   @State note: string = '';
   @Prop @Watch('onTickChanged') pageTick: number = 0;
 
@@ -141,9 +142,12 @@ export struct ConfigHomeView {
       const res = await pluginRequest(host, profile.pluginPort, http.RequestMethod.POST,
         '/pair/register-key', JSON.stringify({ publicKey: key }));
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        promptAction.showToast({ message: '电脑已授权，可以点「开启」了', duration: 3000 });
+        profile.paired = true;
+        profileStore.save(ctx, host, profile);
+        this.pairedFlags[index] = true;
+        promptAction.showToast({ message: '完成配对', duration: 3000 });
       } else {
-        promptAction.showToast({ message: '授权失败：电脑上没点允许', duration: 3000 });
+        promptAction.showToast({ message: '电脑上未允许（UAC 被拒）', duration: 3000 });
       }
     } catch (error) {
       promptAction.showToast({ message: '发送失败：电脑插件没连上', duration: 3000 });
@@ -204,7 +208,10 @@ export struct ConfigHomeView {
                   }
                   .layoutWeight(1)
                   .alignItems(HorizontalAlign.Start)
-                  Text('配对')
+                  if (this.pairedFlags[index] === true) {
+                    Text('此电脑已配对').fontSize(12).fontColor('#2E7D32').padding({ left: 6, right: 6 })
+                  }
+                  Text(this.pairedFlags[index] === true ? '重新配对' : '配对电脑')
                     .fontSize(12).fontColor(UI_ACCENT)
                     .padding({ left: 10, right: 10, top: 5, bottom: 5 })
                     .backgroundColor(UI_ACCENT_SOFT).borderRadius(12)
@@ -281,6 +288,8 @@ export struct ConfigHomeView {
     })
   }
 }
+
+
 
 
 

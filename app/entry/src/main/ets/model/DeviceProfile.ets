@@ -23,6 +23,8 @@ export interface DeviceProfile {
   sshPort: number;
   /** SSH 用户名（**必填**，无默认） */
   sshUser: string;
+  /** 是否已完成配对（电脑已写入本机公钥） */
+  paired: boolean;
 }
 
 /** dsh 端口的默认值（客户：这个可以预置） */
@@ -35,7 +37,8 @@ export function emptyProfile(): DeviceProfile {
     dshPort: DEFAULT_DSH_PORT,
     pluginPort: 0,
     sshPort: 0,
-    sshUser: ''
+    sshUser: '',
+    paired: false
   };
 }
 
@@ -106,4 +109,5 @@ export function profileProblem(p: DeviceProfile): string {
 function isPort(value: number): boolean {
   return Number.isInteger(value) && value > 0 && value <= 65535;
 }
+
 

@@ -1,10 +1,39 @@
-{
+﻿{
   app: {
-    // 发布仓库不包含任何签名材料（证书/私钥/密码）。
+    signingConfigs: [
+      {
+        name: 'default',
+        type: 'HarmonyOS',
+        material: {
+          certpath: './signature/phone.cer',
+          keyAlias: 'debugKey',
+          keyPassword: '0000001A2222D79DC05EE6725A786FB3745BF1CF171DD0E5B5B02C85C353EAE2F88C067906EF4EB15A44',
+          profile: './signature/phone.p7b',
+          signAlg: 'SHA256withECDSA',
+          storeFile: './signature/phone.p12',
+          storePassword: '0000001A520D2F74590F278F3BA652788E01CD62E518A56223A13F816938A95B92F5BE23A1EBE366DBC3'
+        }
+      }
+    ],    signingConfigs: [
+      {
+        name: 'default',
+        type: 'HarmonyOS',
+        material: {
+          certpath: './signature/phone.cer',
+          keyAlias: 'debugKey',
+          keyPassword: '0000001A2222D79DC05EE6725A786FB3745BF1CF171DD0E5B5B02C85C353EAE2F88C067906EF4EB15A44',
+          profile: './signature/phone.p7b',
+          signAlg: 'SHA256withECDSA',
+          storeFile: './signature/phone.p12',
+          storePassword: '0000001A520D2F74590F278F3BA652788E01CD62E518A56223A13F816938A95B92F5BE23A1EBE366DBC3'
+        }
+      }
+    ],    // 发布仓库不包含任何签名材料（证书/私钥/密码）。
     // 本地构建/上架签名请见 docs/构建与签名.md，用自己的证书在本地配置，不要提交进来。
     products: [
       {
         name: 'default',
+        signingConfig: 'default',
         targetSdkVersion: '26.0.0',
         compatibleSdkVersion: '26.0.0',
         runtimeOS: 'HarmonyOS',
@@ -40,3 +69,5 @@
     },
   ],
 }
+
+

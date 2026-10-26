@@ -1472,11 +1472,12 @@ export struct ConversationView {
           TextArea({ text: this.draft })
             .id('chat-input')
             .layoutWeight(1)
-            .constraintSize({ minHeight: 42, maxHeight: 120 })
+            .constraintSize({ minHeight: 44, maxHeight: 120 })
+            .height(44)
             .fontSize(15)
             .backgroundColor(Color.Transparent)
             .borderRadius(21)
-            .padding({ left: 12, right: 12, top: 10, bottom: 10 })
+            .padding({ left: 12, right: 12, top: 11, bottom: 11 })
             // 客户 2026-10-21：大视频上传要时间，这段时间**输入框要变灰、不能输入**（光标别闪），
             // 发完再恢复 —— 否则用户以为发完了，其实还在传。
             .enabled(!this.uploading && !this.sending)
@@ -1499,6 +1500,7 @@ export struct ConversationView {
         if (this.busy && this.draft.trim().length === 0 && this.attachedItems.length === 0) {
           Button('停止')
             .id('chat-stop')
+            .width(64)
             .fontSize(15)
             .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
@@ -1510,6 +1512,7 @@ export struct ConversationView {
         } else if (this.busy) {
           Button('插入')
             .id('chat-steer')
+            .width(64)
             .fontSize(15)
             .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
@@ -1521,6 +1524,7 @@ export struct ConversationView {
         } else {
           Button('发送')
             .id('chat-send')
+            .width(64)
             .fontSize(15)
             .constraintSize({ minHeight: 44 })
             .maxFontScale(1.6)
@@ -1534,6 +1538,7 @@ export struct ConversationView {
       .width('100%')
     }
     .width('100%')
+    .padding({ left: 16, right: 16 })
   }
 
   /**

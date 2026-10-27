@@ -523,7 +523,7 @@ function createStore(options = {}) {
   /**
    * 只有回环和 **tailnet 段内**（100.64.0.0/10）的来源算"自己人"。
    * 2026-10-19 修正：以前只放行"本机那一个 tailnet 地址"，手机（另一台 tailnet 设备）打进来会被 403 ——
-   * 云真机实测手机是 100.119.240.30，`源 100.119.240.30 => false`，App 因此显示"dsh 未启动"。
+   * 云真机实测手机是 100.x.x.x（另一台 tailnet 设备），`源 100.x.x.x => false`，App 因此显示"dsh 未启动"。
    * 安全边界本来就是"只有 tailnet 设备能到达这个口"，按整段放行与设计一致。
    */
   function isAllowedSource(remoteAddress) {

@@ -179,6 +179,18 @@ export struct ConversationView {
     this.getUIContext().setKeyboardAvoidMode(KeyboardAvoidMode.OFFSET);
     this.stopFollow();
     this.closeViewer();
+    // 内嵌图片的 PixelMap 是 native 内存，页面销毁必须逐张 release，否则反复进出会累积
+    for (let i = 0; i < this.inlineStates.length; i++) {
+      const pm: image.PixelMap | undefined = this.inlineStates[i].pixelMap;
+      if (pm !== undefined) {
+        try {
+          pm.release();
+        } catch (releaseError) {
+          // 已经释放过就忽略
+        }
+      }
+    }
+    this.inlineStates = [];
     // 离开会话页：审批通道随页面关闭（插件据此判断手机不在线）
     this.approvalBridge?.close();
     this.approvalBridge = undefined;
@@ -283,6 +295,7 @@ export struct ConversationView {
       this.loadPermission();
     } catch (error) {
       this.statusText = 'dsh 已断开';
+      this.busy = false;
       hilog.error(DOMAIN, TAG, 'F8 boot failed');
     }
   }
@@ -339,6 +352,8 @@ export struct ConversationView {
         this.liveMode = '';
         // 客户 2026-10-18：断开是**状态**，写右上角；红字与「重新连接」按钮都不要了
         this.statusText = 'dsh 已断开';
+        // 断线后不能还挂着“正在思考…”：否则按钮变成「插入」、下一条按 steer 发出去
+        this.busy = false;
       },
       onTitle: (fresh: string) => {
         this.sessionTitle = fresh;
@@ -365,6 +380,8 @@ export struct ConversationView {
         hilog.info(DOMAIN, TAG, 'F8 follow closed: %{public}s', detail);
         this.liveMode = '';
         this.statusText = 'dsh 已断开';
+        // 流断了就别再挂着“正在思考…”
+        this.busy = false;
       }
     });
 

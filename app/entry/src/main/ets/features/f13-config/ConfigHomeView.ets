@@ -172,6 +172,10 @@ export struct ConfigHomeView {
               .layoutWeight(1).height(42)
               .backgroundColor('#FBF4EC')
               .borderRadius(12)
+              .onChange((v: string) => {
+                // 必须回写：否则「保存」读到的还是打开页面时的旧值，用户改了也不生效
+                this.controlUrl = v;
+              })
             Text('保存')
               .fontSize(13).fontColor('#FFFFFF')
               .height(36).padding({ left: 16, right: 16 })

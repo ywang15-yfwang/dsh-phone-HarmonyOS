@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HttpTransport —— `FileTransport` 的**本机预验实现**（`@ohos.net.http`）。
  *
  * 【预验】提前验证产物：不作通过、不进验收结论；真机按正式顺序重跑，以真机为准。
@@ -55,17 +55,34 @@ class HttpWriter implements TransportWriter {
   private cancelled: boolean = false;
   private target: TransportTarget;
   private options: OpenOptions;
+  /**
+   * 已知总大小时预分配的整块缓冲。
+   * 有了它，写入是"逐块拷进同一块内存"，close() 直接发这块，
+   * 不再需要 concatChunks（那一步会同时存在分块集合与拼接体两份）。
+   */
+  private prealloc: Uint8Array | undefined = undefined;
 
   constructor(target: TransportTarget, options: OpenOptions) {
     this.target = target;
     this.options = options;
+    const hint: number = options.totalBytes === undefined ? -1 : options.totalBytes;
+    if (hint > 0 && hint <= 512 * 1024 * 1024) {
+      this.prealloc = new Uint8Array(hint);
+    }
   }
 
   async write(bytes: Uint8Array): Promise<WriteAccepted> {
     if (this.cancelled) {
       return { ok: false, accepted: 0, stage: 'cancel', error: 'cancelled' };
     }
-    this.chunks.push(bytes);
+    if (this.prealloc !== undefined) {
+      if (this.sent + bytes.byteLength > this.prealloc.byteLength) {
+        return { ok: false, accepted: 0, stage: 'write', error: '写入超过声明的总大小' };
+      }
+      this.prealloc.set(bytes, this.sent);
+    } else {
+      this.chunks.push(bytes);
+    }
     this.sent += bytes.byteLength;
     const sink: ProgressSink | undefined = this.options.progress;
     if (sink !== undefined && sink.onUpload !== undefined) {
@@ -94,7 +111,15 @@ class HttpWriter implements TransportWriter {
       address: this.target.address, port: this.target.port, hostHeader: this.target.hostHeader,
       cookie: this.target.cookie, tsTarget: undefined, pathPrefix: this.target.pathPrefix
     };
-    const body: ArrayBuffer | undefined = this.chunks.length > 0 ? concatChunks(this.chunks) : undefined;
+    let body: ArrayBuffer | undefined = undefined;
+    if (this.prealloc !== undefined) {
+      // 预分配路径：直接用这块内存，不拼接（少一份整包副本）
+      body = this.sent === this.prealloc.byteLength
+        ? this.prealloc.buffer as ArrayBuffer
+        : this.prealloc.slice(0, this.sent).buffer as ArrayBuffer;
+    } else if (this.chunks.length > 0) {
+      body = concatChunks(this.chunks);
+    }
     const method: http.RequestMethod = this.options.method === 'POST' ? http.RequestMethod.POST
       : http.RequestMethod.GET;
     // 上传体大小决定总超时（readTimeout 在 netstack 里是整次传输总时长，固定 60s 传不完 150MiB 视频）
@@ -271,11 +296,14 @@ export async function streamUpload(
   progress?: (acceptedBytes: number, totalBytes: number) => void
 ): Promise<TransferResult> {
   const started: number = Date.now();
+  // 先把总大小告诉传输层：buffered 实现据此预分配，避免出现两份整包内存
+  const total: number = source.totalBytes();
   const options: OpenOptions = {
     method: 'POST',
     path: path,
     headers: headers,
-    streaming: true
+    streaming: true,
+    totalBytes: total
   };
   let session: TransportSession | undefined = undefined;
   try {
@@ -287,7 +315,6 @@ export async function streamUpload(
   }
   const opened: TransportSession = session;
   let acceptedTotal: number = 0;
-  const total: number = source.totalBytes();
   try {
     while (true) {
       const chunk: Uint8Array | null = await source.nextChunk();

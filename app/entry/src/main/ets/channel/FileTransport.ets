@@ -141,6 +141,11 @@ export interface OpenOptions {
   headers?: Record<string, string>;
   /** 请求体是否为流式（streaming） */
   streaming?: boolean;
+  /**
+   * 请求体总字节数（已知时传入）。
+   * buffered 实现的写入端据此**一次性预分配**整块缓冲，避免“分块集合 + 拼接体”两份同时驻留。
+   */
+  totalBytes?: number;
   progress?: ProgressSink;
 }
 

@@ -4,14 +4,14 @@ import { isImageName, isVideoName } from '../../model/MediaTypes';
  * 传输上限（客户 2026-10-21 定稿，按类型分）：
  *  - 图片 **20MB**，超限提示「图片太大」；
  *  - 文档 / 其它文件 **20MB**，提示「文件太大」；
- *  - 视频 **150MB**，提示「视频太大」。
+ *  - 视频 **50MB**，提示「视频太大」。
  *
  * 纪律：**超限在发起任何请求之前就拒绝**，不留半截残文件。
  * 提示文案要短（客户口径），且界面上**几秒后自动消失**（由界面负责）。
  */
 export const IMAGE_LIMIT_BYTES: number = 20 * 1024 * 1024;
 export const FILE_LIMIT_BYTES: number = 20 * 1024 * 1024;
-export const VIDEO_LIMIT_BYTES: number = 150 * 1024 * 1024;
+export const VIDEO_LIMIT_BYTES: number = 50 * 1024 * 1024;
 
 export interface SizeEntry {
   /** 相对路径 / 文件名（用于按类型判上限、以及提示可读性） */

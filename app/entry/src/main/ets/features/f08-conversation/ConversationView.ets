@@ -290,6 +290,10 @@ export struct ConversationView {
       }
       this.currentId = picked;
       this.sessionTitle = title.length > 0 ? title : `会话 …${this.shortId(picked)}`;
+      // 进会话时电脑可能**正在思考**：follow 流只在状态"变化"时才推 turnState，
+      // 所以必须用 session/list 里的 running 先播一次种，否则右上角显示"空闲"、
+      // 输入框按钮是「发送」而不是「停止」，要等下一轮才纠正。
+      this.busy = this.runningOf(picked);
       this.subscribe(picked);
       this.ensureApprovalBridge();
       this.loadPermission();
@@ -1194,8 +1198,20 @@ export struct ConversationView {
     this.sessionCwd = row.cwd;
     this.sessionTitle = row.title.length > 0 ? row.title : `会话 …${this.shortId(row.sessionId)}`;
     this.resetForSessionSwitch();
+    // 这台电脑可能正在思考：用列表里的 running 先播种忙状态（follow 只在变化时推）
+    this.busy = this.runningOf(row.sessionId);
     this.subscribe(row.sessionId);
     this.loadPermission();
+  }
+
+  /** 从已加载的会话列表里取"这场是否在运行"，取不到就当空闲。 */
+  private runningOf(sessionId: string): boolean {
+    for (let i = 0; i < this.rows.length; i++) {
+      if (this.rows[i].sessionId === sessionId) {
+        return this.rows[i].running;
+      }
+    }
+    return false;
   }
 
   /**

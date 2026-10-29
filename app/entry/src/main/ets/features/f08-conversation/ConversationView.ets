@@ -145,6 +145,11 @@ export struct ConversationView {
   private fileOps: string[] = [];
   /** 发送代次：每次发送/切会话 +1，旧的 send 收尾不再改界面状态 */
   private sendGen: number = 0;
+  /**
+   * turnState 事件代次：follow 每推一次真实忙状态就 +1。
+   * 进会话时的"补查"用它判断「期间是否已经有可信状态」——有就不覆盖。
+   */
+  private turnStateEpoch: number = 0;
 
   private follow: SessionFollow | undefined = undefined;
   private snapshotTimer: number = -1;
@@ -295,6 +300,7 @@ export struct ConversationView {
       // 输入框按钮是「发送」而不是「停止」，要等下一轮才纠正。
       this.busy = this.runningOf(picked);
       this.subscribe(picked);
+      this.seedBusyFromServer(picked);
       this.ensureApprovalBridge();
       this.loadPermission();
     } catch (error) {
@@ -378,6 +384,8 @@ export struct ConversationView {
         this.rows = nextRows;
       },
       onTurnState: (busyNow: boolean) => {
+        // 真实状态到了：记一代，进会话的补查就不该再覆盖它
+        this.turnStateEpoch = this.turnStateEpoch + 1;
         this.busy = busyNow;
       },
       onClosed: (detail: string) => {
@@ -1201,7 +1209,31 @@ export struct ConversationView {
     // 这台电脑可能正在思考：用列表里的 running 先播种忙状态（follow 只在变化时推）
     this.busy = this.runningOf(row.sessionId);
     this.subscribe(row.sessionId);
+    this.seedBusyFromServer(row.sessionId);
     this.loadPermission();
+  }
+
+  /**
+   * 进会话后**补查一次**"这场是否在跑任务"：
+   * follow 只在状态变化时推 turnState，进入那一刻的状态必须自己问一次。
+   * 与缓存行不同：这里重新拉 session/list，拿到的是当前的 running；
+   * 若期间 follow 已推过真实状态（epoch 变了），就不覆盖。
+   */
+  private async seedBusyFromServer(sessionId: string): Promise<void> {
+    const epoch: number = this.turnStateEpoch;
+    try {
+      const rows: SessionRow[] = await this.loadRows('');
+      if (this.disposed || this.currentId !== sessionId) {
+        return;
+      }
+      if (this.turnStateEpoch !== epoch) {
+        return;
+      }
+      this.rows = rows;
+      this.busy = this.runningOf(sessionId);
+    } catch (seedError) {
+      // 补查失败：维持进会话时用缓存播种的值
+    }
   }
 
   /** 从已加载的会话列表里取"这场是否在运行"，取不到就当空闲。 */
